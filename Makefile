@@ -2,7 +2,7 @@ CC      = x86_64-elf-gcc
 LD      = x86_64-elf-ld
 AS      = nasm
 
-CFLAGS  = -ffreestanding -O2 -Wall -Wextra -nostdlib -fno-builtin -fno-stack-protector -m32 -I kernel/arch -I kernel/drivers -I kernel/lib -I kernel/include
+CFLAGS  = -ffreestanding -O2 -Wall -Wextra -nostdlib -fno-builtin -fno-stack-protector -m32 -mno-sse -mno-sse2 -mgeneral-regs-only -I kernel/arch -I kernel/drivers -I kernel/lib -I kernel/include -I kernel/memory
 ASFLAGS = -f elf32
 LDFLAGS = -T boot/linker.ld -nostdlib -m elf_i386
 
@@ -13,7 +13,9 @@ OBJS = build/boot.o \
        build/isr.o \
        build/vga.o \
        build/kprintf.o \
-       build/string.o
+       build/string.o \
+       build/pic.o \
+       build/pmm.o
 
 .PHONY: all iso run run-iso clean
 
@@ -62,6 +64,14 @@ build/kprintf.o: kernel/lib/kprintf.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 build/string.o: kernel/lib/string.c
+	@mkdir -p build
+	$(CC) $(CFLAGS) -c $< -o $@
+
+build/pic.o: kernel/arch/pic.c
+	@mkdir -p build
+	$(CC) $(CFLAGS) -c $< -o $@
+
+build/pmm.o: kernel/memory/pmm.c
 	@mkdir -p build
 	$(CC) $(CFLAGS) -c $< -o $@
 
