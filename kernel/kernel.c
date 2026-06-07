@@ -38,6 +38,8 @@ void kernel_main(void)
     vga_init(); // clears screen, sets color — replaces the inline VGA block
 
     LOG_INFO("XETEX-OS booting...");
+    LOG_INFO("Developed by Kartik & Harsh");
+    LOG_INFO("Booting...");
 
     gdt_init();
     LOG_OK("GDT initialized");
@@ -45,7 +47,7 @@ void kernel_main(void)
     idt_init();
     LOG_OK("IDT initialized");
 
-    LOG_INFO("Phase 1 complete. System halted.");
+    LOG_INFO("Phase 1 ongoing.... System halted.");
     while (1)
     {
     }
