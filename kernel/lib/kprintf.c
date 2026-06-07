@@ -49,6 +49,7 @@ static void print_int(int32_t n)
     }
     print_uint((uint32_t)n, 10, 0, ' ');
 }
+
 void kprintf(const char *fmt, ...)
 {
     va_list args;
