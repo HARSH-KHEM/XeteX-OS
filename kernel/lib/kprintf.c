@@ -12,7 +12,7 @@ static void print_str(const char *s)
         vga_putchar(*s++);
 }
 
-static void print_uint(uint64_t n, int base, int pad, char pad_char)
+static void print_uint(uint32_t n, int base, int pad, char pad_char)
 {
     const char *digits = "0123456789abcdef";
     char buf[64];
@@ -40,16 +40,15 @@ static void print_uint(uint64_t n, int base, int pad, char pad_char)
         vga_putchar(buf[i]);
 }
 
-static void print_int(int64_t n)
+static void print_int(int32_t n)
 {
     if (n < 0)
     {
         vga_putchar('-');
         n = -n;
     }
-    print_uint((uint64_t)n, 10, 0, ' ');
+    print_uint((uint32_t)n, 10, 0, ' ');
 }
-
 void kprintf(const char *fmt, ...)
 {
     va_list args;
@@ -91,7 +90,7 @@ void kprintf(const char *fmt, ...)
             break;
         case 'p':
             print_str("0x");
-            print_uint((uint64_t)(uintptr_t)va_arg(args, void *), 16, 16, '0');
+            print_uint((uint32_t)(uintptr_t)va_arg(args, void *), 16, 8, '0');
             break;
         case 's':
             print_str(va_arg(args, char *));

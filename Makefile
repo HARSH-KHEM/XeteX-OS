@@ -2,14 +2,18 @@ CC      = x86_64-elf-gcc
 LD      = x86_64-elf-ld
 AS      = nasm
 
-CFLAGS  = -ffreestanding -O2 -Wall -Wextra -nostdlib -fno-builtin -fno-stack-protector -m32 -I kernel/arch
+CFLAGS  = -ffreestanding -O2 -Wall -Wextra -nostdlib -fno-builtin -fno-stack-protector -m32 -I kernel/arch -I kernel/drivers -I kernel/lib -I kernel/include
 ASFLAGS = -f elf32
 LDFLAGS = -T boot/linker.ld -nostdlib -m elf_i386
 
-OBJS = build/boot.o build/kernel.o \
+OBJS = build/boot.o \
+       build/kernel.o \
        build/gdt.o build/gdt_asm.o \
        build/idt.o build/idt_asm.o \
-       build/isr.o
+       build/isr.o \
+       build/vga.o \
+       build/kprintf.o \
+       build/string.o
 
 .PHONY: all iso run run-iso clean
 
@@ -48,11 +52,22 @@ build/isr.o: kernel/arch/isr.c
 	@mkdir -p build
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# Direct multiboot boot via QEMU -- no ISO or GRUB needed.
+# YOUR NEW FILES
+build/vga.o: kernel/drivers/vga.c
+	@mkdir -p build
+	$(CC) $(CFLAGS) -c $< -o $@
+
+build/kprintf.o: kernel/lib/kprintf.c
+	@mkdir -p build
+	$(CC) $(CFLAGS) -c $< -o $@
+
+build/string.o: kernel/lib/string.c
+	@mkdir -p build
+	$(CC) $(CFLAGS) -c $< -o $@
+
 run: build/xetex.bin
 	qemu-system-i386 -kernel build/xetex.bin -m 256M -serial stdio -no-reboot -no-shutdown
 
-# ISO target -- requires i686-elf-grub (brew install i686-elf-grub)
 iso: build/xetex.bin
 	@mkdir -p iso/boot/grub
 	cp build/xetex.bin iso/boot/
@@ -60,16 +75,8 @@ iso: build/xetex.bin
 	i686-elf-grub-mkrescue -o build/xetex.iso iso
 	@echo "ISO created"
 
-# Boot via ISO
 run-iso: iso
 	qemu-system-i386 -boot d -cdrom build/xetex.iso -m 256M -serial stdio -no-reboot -no-shutdown
 
 clean:
 	rm -rf build/
-
-C_SOURCES = kernel/kernel.c \
-            kernel/arch/gdt.c \
-            kernel/arch/idt.c \
-            kernel/arch/isr.c \
-            kernel/drivers/vga.c \
-            kernel/lib/kprintf.c
