@@ -1,3 +1,4 @@
+/*
 #include "gdt.h"
 #include "idt.h"
 
@@ -22,4 +23,30 @@ void kernel_main(void) {
     }
 
     while (1) {}
+}
+
+*/
+
+#include "arch/gdt.h"
+#include "arch/idt.h"
+#include "drivers/vga.h"
+#include "lib/kprintf.h"
+#include "include/log.h"
+
+void kernel_main(void)
+{
+    vga_init(); // clears screen, sets color — replaces the inline VGA block
+
+    LOG_INFO("XETEX-OS booting...");
+
+    gdt_init();
+    LOG_OK("GDT initialized");
+
+    idt_init();
+    LOG_OK("IDT initialized");
+
+    LOG_INFO("Phase 1 complete. System halted.");
+    while (1)
+    {
+    }
 }

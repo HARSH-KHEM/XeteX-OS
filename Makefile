@@ -66,3 +66,10 @@ run-iso: iso
 
 clean:
 	rm -rf build/
+
+C_SOURCES = kernel/kernel.c \
+            kernel/arch/gdt.c \
+            kernel/arch/idt.c \
+            kernel/arch/isr.c \
+            kernel/drivers/vga.c \
+            kernel/lib/kprintf.c
