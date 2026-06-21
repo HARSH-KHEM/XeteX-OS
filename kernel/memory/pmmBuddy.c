@@ -1,4 +1,4 @@
-#include "pmm.h"
+#include "pmmBuddy.h"
 
 typedef struct buddy_block
 {
