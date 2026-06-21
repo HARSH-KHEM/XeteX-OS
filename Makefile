@@ -16,7 +16,8 @@ OBJS = build/boot.o \
        build/string.o \
        build/pic.o \
        build/pmm.o \
-       build/pmmBuddy.o
+	   build/bitmap.o \
+	   build/buddy.o 
 
 .PHONY: all iso run run-iso clean
 
@@ -72,11 +73,15 @@ build/pic.o: kernel/arch/pic.c
 	@mkdir -p build
 	$(CC) $(CFLAGS) -c $< -o $@
 
-build/pmm.o: kernel/memory/pmm.c
+build/bitmap.o: kernel/memory/bitmap.c
 	@mkdir -p build
 	$(CC) $(CFLAGS) -c $< -o $@
 
-build/pmmBuddy.o: kernel/memory/pmmBuddy.c
+build/buddy.o: kernel/memory/buddy.c
+	@mkdir -p build
+	$(CC) $(CFLAGS) -c $< -o $@
+
+build/pmm.o: kernel/memory/pmm.c
 	@mkdir -p build
 	$(CC) $(CFLAGS) -c $< -o $@
 
