@@ -9,3 +9,5 @@ uint32_t pmm_alloc_page(void);
 void pmm_free_page(uint32_t addr);
 
 uint32_t pmm_get_free_pages(void);
+
+void pmm_reserve_range(uint32_t start_addr, uint32_t end_addr);

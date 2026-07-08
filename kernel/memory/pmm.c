@@ -57,3 +57,23 @@ uint32_t pmm_get_free_pages(void)
 
 #endif
 }
+
+void pmm_reserve_range(uint32_t start_addr, uint32_t end_addr)
+{
+#if PMM_TYPE == PMM_BITMAP
+
+    uint32_t start_page_addr = start_addr & ~(PAGE_SIZE - 1);
+    uint32_t end_page_addr   = (end_addr + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
+
+    for (uint32_t addr = start_page_addr; addr < end_page_addr; addr += PAGE_SIZE)
+    {
+        bitmap_reserve_page(addr);
+    }
+
+#elif PMM_TYPE == PMM_BUDDY
+
+    (void)start_addr;
+    (void)end_addr;
+
+#endif
+}

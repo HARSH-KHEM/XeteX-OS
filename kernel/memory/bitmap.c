@@ -93,3 +93,19 @@ uint32_t bitmap_get_free_pages(void)
 {
     return total_pages - used_pages;
 }
+
+void bitmap_reserve_page(uint32_t addr)
+{
+    uint32_t page = addr / PMM_PAGE_SIZE;
+
+    if (page >= total_pages)
+    {
+        return;
+    }
+
+    if (!bitmap_test(page))
+    {
+        bitmap_set(page);
+        used_pages++;
+    }
+}
