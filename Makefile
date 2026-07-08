@@ -16,8 +16,10 @@ OBJS = build/boot.o \
        build/string.o \
        build/pic.o \
        build/pmm.o \
-	   build/bitmap.o \
-	   build/buddy.o 
+       build/bitmap.o \
+       build/buddy.o \
+       build/vmm.o \
+       build/paging.o
 
 .PHONY: all iso run run-iso clean
 
@@ -84,6 +86,14 @@ build/buddy.o: kernel/memory/buddy.c
 build/pmm.o: kernel/memory/pmm.c
 	@mkdir -p build
 	$(CC) $(CFLAGS) -c $< -o $@
+
+build/vmm.o: kernel/memory/vmm.c
+	@mkdir -p build
+	$(CC) $(CFLAGS) -c $< -o $@
+
+build/paging.o: kernel/arch/paging.asm
+	@mkdir -p build
+	$(AS) $(ASFLAGS) $< -o $@
 
 run: build/xetex.bin
 	qemu-system-i386 -kernel build/xetex.bin -m 256M -serial stdio -no-reboot -no-shutdown

@@ -12,6 +12,7 @@ extern void isr4(void);
 extern void isr5(void);
 extern void isr6(void);
 extern void isr7(void);
+extern void isr14(void);
 
 #define IDT_ENTRIES 256
 
@@ -53,6 +54,7 @@ void idt_init(void) {
     idt_set_gate(5, (uint32_t)isr5, 0x08, 0x8E);  // bound range exceeded
     idt_set_gate(6, (uint32_t)isr6, 0x08, 0x8E);  // invalid opcode
     idt_set_gate(7, (uint32_t)isr7, 0x08, 0x8E);  // device not available
+    idt_set_gate(14, (uint32_t)isr14, 0x08, 0x8E); // page fault
 
     idt_flush((uint32_t)&idt_ptr);  // defined in idt.asm
 }

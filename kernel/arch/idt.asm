@@ -15,6 +15,7 @@ global isr4
 global isr5
 global isr6
 global isr7
+global isr14
 
 extern isr_handler
 
@@ -64,6 +65,11 @@ isr7:
     cli
     push byte 0
     push byte 7
+    jmp isr_common_stub
+
+isr14:
+    cli
+    push byte 14
     jmp isr_common_stub
 
 isr_common_stub:

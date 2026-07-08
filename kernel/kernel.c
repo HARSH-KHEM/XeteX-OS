@@ -3,6 +3,7 @@
 #include "arch/pic.h"
 
 #include "memory/pmm.h"
+#include "memory/vmm.h"
 
 #include "drivers/vga.h"
 
@@ -51,7 +52,16 @@ void kernel_main(void)
 
     LOG_INFO("Page freed successfully");
 
-    LOG_OK("Phase 2 complete. All systems go.");
+    /* -------------- VMM -------------- */
+
+    LOG_INFO("Initializing VMM...");
+
+    vmm_init();
+
+    LOG_OK("VMM initialized — paging enabled");
+
+
+    LOG_OK("Phase 3 started. Paging enabled.");
 
     while (1)
     {

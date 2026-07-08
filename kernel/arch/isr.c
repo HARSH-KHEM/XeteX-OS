@@ -32,6 +32,13 @@ static const char *exception_names[] = {
     "Bound Range Exceeded",
     "Invalid Opcode",
     "Device Not Available",
+    "Double Fault",
+    "Coprocessor Segment Overrun",
+    "Invalid TSS",
+    "Segment Not Present",
+    "Stack Segment Fault",
+    "General Protection Fault",
+    "Page Fault",
 };
 
 void isr_handler(registers_t r) {
@@ -48,7 +55,7 @@ void isr_handler(registers_t r) {
         col++;
     }
 
-    if (r.int_no < 8) {
+    if (r.int_no < 15) {
         const char *name = exception_names[r.int_no];
         for (int i = 0; name[i]; i++) {
             vga[(row * VGA_COLS + col) * 2]     = name[i];
