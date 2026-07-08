@@ -68,25 +68,6 @@ void kernel_main(void)
 
     vmm_init();
 
-    uint32_t phys = pmm_alloc_page();
-    uint32_t virt = 0x400000;
-
-    vmm_map_page(virt, phys, PAGE_WRITABLE);
-
-    LOG_INFO("Mapped virtual 0x%x to physical 0x%x",
-         virt,
-         phys);
-
-    uint32_t translated = vmm_get_physical(virt);
-
-    LOG_INFO("Translated virtual 0x%x to physical 0x%x",
-         virt,
-         translated);
-
-    vmm_unmap_page(virt);
-
-    LOG_INFO("Unmapped virtual 0x%x", virt);
-
     LOG_OK("VMM initialized — paging enabled");
 
 
