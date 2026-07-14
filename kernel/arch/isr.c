@@ -1,30 +1,10 @@
 #include "isr.h"
 
-extern uint32_t read_cr2(void);
-extern uint32_t read_cr2(void);
+#define VGA_BUFFER   0xB8000
+#define WHITE_ON_RED 0x4F
+#define VGA_COLS     80
 
-#define VGA_BUFFER     0xB8000
-#define WHITE_ON_RED   0x4F
-#define VGA_COLS       80
-
-// simple integer-to-string for exception number
-static void int_to_str(uint32_t num, char *buf) {
-    if (num == 0) {
-        buf[0] = '0';
-        buf[1] = '\0';
-        return;
-    }
-    int i = 0;
-    char tmp[12];
-    while (num > 0) {
-        tmp[i++] = '0' + (num % 10);
-        num /= 10;
-    }
-    for (int j = 0; j < i; j++) {
-        buf[j] = tmp[i - 1 - j];
-    }
-    buf[i] = '\0';
-}
+extern uint32_t read_cr2(void);
 
 static const char *exception_names[] = {
     "Divide By Zero",
@@ -44,6 +24,32 @@ static const char *exception_names[] = {
     "Page Fault",
 };
 
+static void int_to_str(uint32_t num, char *buffer)
+{
+    if (num == 0)
+    {
+        buffer[0] = '0';
+        buffer[1] = '\0';
+        return;
+    }
+
+    char reversed[12];
+    int length = 0;
+
+    while (num > 0)
+    {
+        reversed[length++] = '0' + (num % 10);
+        num /= 10;
+    }
+
+    for (int i = 0; i < length; i++)
+    {
+        buffer[i] = reversed[length - 1 - i];
+    }
+
+    buffer[length] = '\0';
+}
+
 static void int_to_hex(uint32_t value, char *buffer)
 {
     const char hex_digits[] = "0123456789ABCDEF";
@@ -57,233 +63,149 @@ static void int_to_hex(uint32_t value, char *buffer)
     buffer[8] = '\0';
 }
 
-void isr_handler(registers_t r)
+static void vga_write_text(int row, int *col, const char *text)
 {
     volatile unsigned char *vga =
         (volatile unsigned char *)VGA_BUFFER;
 
-    int row = 2;
-    int col = 0;
-
-    /*
-     * Special handling for page fault.
-     */
-    if (r.int_no == 14)
+    for (int i = 0;
+         text[i] != '\0' && *col < VGA_COLS;
+         i++)
     {
-        uint32_t fault_address = read_cr2();
-        uint32_t error_code = r.err_code;
+        uint32_t index =
+            (row * VGA_COLS + *col) * 2;
 
-        const char *title = "PAGE FAULT";
+        vga[index] = text[i];
+        vga[index + 1] = WHITE_ON_RED;
 
-        for (int i = 0; title[i]; i++)
-        {
-            vga[(row * VGA_COLS + col) * 2] = title[i];
-            vga[(row * VGA_COLS + col) * 2 + 1] = WHITE_ON_RED;
-            col++;
-        }
-
-        row++;
-        col = 0;
-
-        const char *address_text = "ADDRESS: 0x";
-
-        for (int i = 0; address_text[i]; i++)
-        {
-            vga[(row * VGA_COLS + col) * 2] = address_text[i];
-            vga[(row * VGA_COLS + col) * 2 + 1] = WHITE_ON_RED;
-            col++;
-        }
-
-        char address_buffer[12];
-        int_to_hex(fault_address, address_buffer);
-
-        for (int i = 0; address_buffer[i]; i++)
-        {
-            vga[(row * VGA_COLS + col) * 2] = address_buffer[i];
-            vga[(row * VGA_COLS + col) * 2 + 1] = WHITE_ON_RED;
-            col++;
-        }
-
-        row++;
-        col = 0;
-
-        const char *reason;
-
-        if (error_code & 0x1)
-        {
-            reason = "REASON: PROTECTION VIOLATION";
-        }
-        else
-        {
-            reason = "REASON: PAGE NOT PRESENT";
-        }
-
-        for (int i = 0; reason[i]; i++)
-        {
-            vga[(row * VGA_COLS + col) * 2] = reason[i];
-            vga[(row * VGA_COLS + col) * 2 + 1] = WHITE_ON_RED;
-            col++;
-        }
-
-        row++;
-        col = 0;
-
-        const char *operation;
-
-        if (error_code & 0x2)
-        {
-            operation = "OPERATION: WRITE";
-        }
-        else
-        {
-            operation = "OPERATION: READ";
-        }
-
-        for (int i = 0; operation[i]; i++)
-        {
-            vga[(row * VGA_COLS + col) * 2] = operation[i];
-            vga[(row * VGA_COLS + col) * 2 + 1] = WHITE_ON_RED;
-            col++;
-        }
-
-        row++;
-        col = 0;
-
-        const char *privilege;
-
-        if (error_code & 0x4)
-        {
-            privilege = "MODE: USER";
-        }
-        else
-        {
-            privilege = "MODE: KERNEL";
-        }
-
-        for (int i = 0; privilege[i]; i++)
-        {
-            vga[(row * VGA_COLS + col) * 2] = privilege[i];
-            vga[(row * VGA_COLS + col) * 2 + 1] = WHITE_ON_RED;
-            col++;
-        }
-
-        for (;;)
-        {
-            __asm__ volatile("cli; hlt");
-        }
+        (*col)++;
     }
+}
 
-    /*
-     * Generic exception handling.
-     */
-    const char *prefix = "EXCEPTION: ";
-
-    for (int i = 0; prefix[i]; i++)
-    {
-        vga[(row * VGA_COLS + col) * 2] = prefix[i];
-        vga[(row * VGA_COLS + col) * 2 + 1] = WHITE_ON_RED;
-        col++;
-    }
-
-    if (r.int_no < 15)
-    {
-        const char *name = exception_names[r.int_no];
-
-        for (int i = 0; name[i]; i++)
-        {
-            vga[(row * VGA_COLS + col) * 2] = name[i];
-            vga[(row * VGA_COLS + col) * 2 + 1] = WHITE_ON_RED;
-            col++;
-        }
-    }
-    else
-    {
-        const char *unknown = "INT #";
-
-        for (int i = 0; unknown[i]; i++)
-        {
-            vga[(row * VGA_COLS + col) * 2] = unknown[i];
-            vga[(row * VGA_COLS + col) * 2 + 1] = WHITE_ON_RED;
-            col++;
-        }
-
-        char number_buffer[12];
-        int_to_str(r.int_no, number_buffer);
-
-        for (int i = 0; number_buffer[i]; i++)
-        {
-            vga[(row * VGA_COLS + col) * 2] = number_buffer[i];
-            vga[(row * VGA_COLS + col) * 2 + 1] = WHITE_ON_RED;
-            col++;
-        }
-    }
-
+static void halt_after_exception(void)
+{
     for (;;)
     {
         __asm__ volatile("cli; hlt");
     }
 }
 
-static void handle_page_fault(registers_t *regs)
+static void handle_page_fault(registers_t r)
 {
     uint32_t fault_address = read_cr2();
-    uint32_t error_code = regs->err_code;
+    uint32_t error_code = r.err_code;
 
-    int protection_violation = error_code & 0x1;
-    int write_operation      = error_code & 0x2;
-    int user_mode            = error_code & 0x4;
-    int reserved_bit         = error_code & 0x8;
-    int instruction_fetch    = error_code & 0x10;
+    int row = 2;
+    int col = 0;
 
-    kprintf("\n========== PAGE FAULT ==========\n");
+    vga_write_text(row, &col, "PAGE FAULT");
 
-    kprintf("Faulting virtual address: 0x%x\n",
-            fault_address);
+    row++;
+    col = 0;
 
-    kprintf("Error code: 0x%x\n",
-            error_code);
+    vga_write_text(row, &col, "ADDRESS: 0x");
 
-    if (protection_violation)
+    char address_buffer[9];
+    int_to_hex(fault_address, address_buffer);
+
+    vga_write_text(row, &col, address_buffer);
+
+    row++;
+    col = 0;
+
+    if (error_code & 0x1)
     {
-        kprintf("Reason: Page protection violation\n");
+        vga_write_text(
+            row,
+            &col,
+            "REASON: PROTECTION VIOLATION"
+        );
     }
     else
     {
-        kprintf("Reason: Page not present\n");
+        vga_write_text(
+            row,
+            &col,
+            "REASON: PAGE NOT PRESENT"
+        );
     }
 
-    if (write_operation)
+    row++;
+    col = 0;
+
+    if (error_code & 0x2)
     {
-        kprintf("Operation: Write\n");
+        vga_write_text(
+            row,
+            &col,
+            "OPERATION: WRITE"
+        );
     }
     else
     {
-        kprintf("Operation: Read\n");
+        vga_write_text(
+            row,
+            &col,
+            "OPERATION: READ"
+        );
     }
 
-    if (user_mode)
+    row++;
+    col = 0;
+
+    if (error_code & 0x4)
     {
-        kprintf("Privilege: User mode\n");
+        vga_write_text(
+            row,
+            &col,
+            "MODE: USER"
+        );
     }
     else
     {
-        kprintf("Privilege: Kernel mode\n");
+        vga_write_text(
+            row,
+            &col,
+            "MODE: KERNEL"
+        );
     }
 
-    if (reserved_bit)
+    halt_after_exception();
+}
+
+void isr_handler(registers_t r)
+{
+    if (r.int_no == 14)
     {
-        kprintf("Reserved paging bit was overwritten\n");
+        handle_page_fault(r);
     }
 
-    if (instruction_fetch)
+    int row = 2;
+    int col = 0;
+
+    vga_write_text(row, &col, "EXCEPTION: ");
+
+    if (r.int_no < 15)
     {
-        kprintf("Fault occurred during instruction fetch\n");
+        vga_write_text(
+            row,
+            &col,
+            exception_names[r.int_no]
+        );
     }
-
-    kprintf("================================\n");
-
-    while (1)
+    else
     {
-        __asm__ volatile("cli; hlt");
+        vga_write_text(row, &col, "INT #");
+
+        char number_buffer[12];
+        int_to_str(r.int_no, number_buffer);
+
+        vga_write_text(
+            row,
+            &col,
+            number_buffer
+        );
     }
+
+    halt_after_exception();
 }
