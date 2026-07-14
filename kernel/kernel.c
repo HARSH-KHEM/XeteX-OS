@@ -70,6 +70,17 @@ void kernel_main(void)
 
     LOG_OK("VMM initialized — paging enabled");
 
+    /* ---------- Temporary Page Fault Test ---------- */
+
+    LOG_INFO("Testing Page Fault Handler...");
+
+    volatile uint32_t *invalid =
+        (volatile uint32_t *)0x500000;
+
+    *invalid = 0xDEADBEEF;
+
+    /* ----------------------------------------------- */
+
 
     LOG_OK("Phase 3 started. Paging enabled.");
 

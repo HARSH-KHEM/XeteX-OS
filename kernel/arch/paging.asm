@@ -3,6 +3,7 @@
 global load_page_directory
 global enable_paging
 global flush_tlb
+global read_cr2
 
 load_page_directory:
     mov eax, [esp + 4]
@@ -18,4 +19,8 @@ enable_paging:
 flush_tlb:
     mov eax, [esp + 4]
     invlpg [eax]
+    ret
+
+read_cr2:
+    mov eax, cr2
     ret
